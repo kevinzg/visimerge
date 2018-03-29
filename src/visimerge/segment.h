@@ -3,6 +3,7 @@
 
 #include <moderngpu/meta.hxx>
 #include "vec2.h"
+#include "util.h"
 
 namespace vmgpu {
 
