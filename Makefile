@@ -11,20 +11,21 @@ all: \
 	tests
 
 tests: \
-	test_mergesort \
-	test_serial_visimergesort \
-	test_kernel_visimergesort
+	bin/test_mergesort \
+	bin/test_serial_visimergesort \
+	bin/test_kernel_visimergesort
 
-test_mergesort: tests/test_mergesort.cu
+bin/test_mergesort: tests/test_mergesort.cu
+	mkdir -p bin
 	nvcc $(ARCH) $(OPTIONS) -o $@ $<
 
-test_serial_visimergesort: tests/test_serial_visimergesort.cpp src/visimerge/*.h
+bin/test_serial_visimergesort: tests/test_serial_visimergesort.cpp src/visimerge/*.h
+	mkdir -p bin
 	g++ $(GCC_OPTIONS) -o $@ $<
 
-test_kernel_visimergesort: tests/test_kernel_visimergesort.cu src/visimerge/*.h src/visimerge/*.cuh
+bin/test_kernel_visimergesort: tests/test_kernel_visimergesort.cu src/visimerge/*.h src/visimerge/*.cuh
+	mkdir -p bin
 	nvcc $(ARCH) $(OPTIONS) -o $@ $<
 
 clean:
-	rm test_mergesort
-	rm test_serial_visimergesort
-	rm test_kernel_visimergesort
+	rm -rf bin/
