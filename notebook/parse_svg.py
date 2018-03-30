@@ -26,7 +26,7 @@ if __name__ == '__main__':
             d = e.attrib['d'].split()
 
             if len(d) != 4 or d[0] != 'M' or d[2] != 'L':
-                print('error: please use paths with absolute coordinates e.g. "M 0,10 L 10,20"',
+                print('error: please use paths with absolute coordinates e.g. "M 0,10 L 10,20"\n(id: {0})'.format(e.attrib['id']),
                       file=sys.stderr)
                 exit(1)
 
