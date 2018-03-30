@@ -4,8 +4,6 @@
 #include <algorithm>
 #include "serial_visimerge.h"
 
-using std::swap;
-
 namespace vmgpu {
 
 
@@ -27,7 +25,7 @@ void init_viewrays(segment<T> *segs, size_t count, viewray<T> *dest)
         vec2T b = segs[i].b;
 
         if (cross(a, b) < 0)
-            swap(a, b);
+            std::swap(a, b);
 
         T atan2b = atan2(b);
         atan2b = atan2b == 0 ? 2 * M_PI : atan2b;
@@ -48,7 +46,7 @@ void serial_visimergesort(segment<T> *segs, size_t count, viewray<T> *output)
     viewrayT *input = output;
     viewrayT *buffer = new viewrayT[count * 2];
 
-    if (num_passes & 1) swap(input, buffer);
+    if (num_passes & 1) std::swap(input, buffer);
 
     init_viewrays(segs, count, input);
 
@@ -64,7 +62,7 @@ void serial_visimergesort(segment<T> *segs, size_t count, viewray<T> *output)
             serial_visimerge(a, sub_count, b, sub_count, buffer + start);
         }
 
-        swap(input, buffer);
+        std::swap(input, buffer);
     }
 
     delete[] buffer;
