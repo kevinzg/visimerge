@@ -1,7 +1,7 @@
 # Targetted to Tesla K80
 ARCH=-gencode arch=compute_37,code=sm_37
 
-OPTIONS=-std=c++11 -O2 -g -lineinfo --expt-extended-lambda -use_fast_math -Xptxas="-v" -I src/moderngpu/src
+OPTIONS=-std=c++11 -O2 -g -lineinfo --expt-extended-lambda -use_fast_math -Xptxas="-v" -I lib/moderngpu/src
 
 .PHONY: all tests clean
 
