@@ -18,6 +18,8 @@ def main():
         print('{0}: missing file operands'.format(sys.argv[0]), file=sys.stderr)
         exit(1)
 
+    vm.Real = float
+
     with open(sys.argv[1]) as f:
         segments = vm.parse(f.read())
 
