@@ -2,6 +2,7 @@
 #define VMGPU_VEC2_H
 
 #include <moderngpu/meta.hxx>
+#include <cmath>
 #include "util.h"
 
 namespace vmgpu {
@@ -72,7 +73,7 @@ MGPU_HOST_DEVICE vec2<T> normalize(const vec2<T> &a)
 template<typename T>
 MGPU_HOST_DEVICE T atan2(const vec2<T> &a)
 {
-    T t = atan2(a.y, a.x);
+    T t = std::atan2(a.y, a.x);
     return t >= 0 ? t : t + 2 * M_PI;
 }
 
