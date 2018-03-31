@@ -73,7 +73,12 @@ MGPU_HOST_DEVICE vec2<T> normalize(const vec2<T> &a)
 template<typename T>
 MGPU_HOST_DEVICE T atan2(const vec2<T> &a)
 {
+#ifdef __CUDACC__
+    T t = ::atan2(a.y, a.x);
+#else
     T t = std::atan2(a.y, a.x);
+#endif // __CUDACC__
+
     return t >= 0 ? t : t + 2 * M_PI;
 }
 
