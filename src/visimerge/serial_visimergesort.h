@@ -30,8 +30,8 @@ void init_viewrays(segment<T> *segs, size_t count, viewray<T> *dest)
         T atan2b = atan2(b);
         atan2b = atan2b == 0 ? 2 * M_PI : atan2b;
 
-        dest[2 * i] = viewrayT(atan2(a), normalize(a), norm(a), -1);
-        dest[2 * i + 1] = viewrayT(atan2b, normalize(b), -1, norm(b));
+        dest[2 * i] = viewrayT(atan2(a), normalize(a), norm(a), CUDART_INF);
+        dest[2 * i + 1] = viewrayT(atan2b, normalize(b), CUDART_INF, norm(b));
     }
 }
 

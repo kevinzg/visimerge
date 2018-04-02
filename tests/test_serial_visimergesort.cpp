@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include <cmath>
 #include "visimerge/serial_visimergesort.h"
 
 using namespace vmgpu;
@@ -47,8 +48,8 @@ void print_viewrays(const std::vector<viewray<T>> &vec, Os &out)
         out << vec[i].t << " "
             << vec[i].v.x << " "
             << vec[i].v.y << " "
-            << vec[i].r << " "
-            << vec[i].l << std::endl;
+            << (std::isinf(vec[i].r) ? -1 : vec[i].r) << " "
+            << (std::isinf(vec[i].l) ? -1 : vec[i].l) << std::endl;;
     }
 }
 
