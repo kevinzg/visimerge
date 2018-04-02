@@ -17,8 +17,12 @@ def main():
     xlim = 0
     ylim = 0
 
+    count_collinear = 0
+    count_splitted = 0
+
     for s in segments:
         if vm.are_collinear(vm.origin, *s):
+            count_collinear += 1
             continue
 
         vrs = vm.visible_region_for_segment(s)
@@ -29,5 +33,10 @@ def main():
 
             print('{0:.3f},{1:.3f} {2:.3f},{3:.3f}'.format(*a, *b))
 
-if __name__ == "__main__":
+        count_splitted += len(vrs) // 2 - 1
+
+    print('{0} collinear segments removed. {1} segments splitted.'.format(count_collinear, count_splitted),
+        file=sys.stderr)
+
+if __name__ == '__main__':
     main()

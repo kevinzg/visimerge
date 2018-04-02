@@ -39,3 +39,6 @@ if __name__ == '__main__':
     for s in segments:
         print('{0:.3f},{1:.3f} {2:.3f},{3:.3f}'.format(s[0][0] - origin[0], -(s[0][1] - origin[1]),
                                                        s[1][0] - origin[0], -(s[1][1] - origin[1])))
+
+    print('{0} segments found. Origin was ({1:.3f}, {1:.3f}).'.format(len(segments), origin[0], origin[1]),
+        file=sys.stderr)
