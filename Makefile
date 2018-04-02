@@ -11,13 +11,8 @@ all: \
 	tests
 
 tests: \
-	bin/test_mergesort \
 	bin/test_serial_visimergesort \
 	bin/test_kernel_visimergesort
-
-bin/test_mergesort: tests/test_mergesort.cu
-	mkdir -p bin
-	nvcc $(ARCH) $(OPTIONS) -o $@ $<
 
 bin/test_serial_visimergesort: tests/test_serial_visimergesort.cpp src/visimerge/*.h
 	mkdir -p bin
