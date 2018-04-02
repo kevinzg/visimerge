@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include <cmath>
 #include "visimerge/kernel_visimergesort.cuh"
 
 using namespace vmgpu;
@@ -42,13 +43,13 @@ std::vector<segment<T>> readfile(const std::string &filename)
 template<typename T, typename Os>
 void print_viewrays(const std::vector<viewray<T>> &vec, Os &out)
 {
-    for (size_t i = 0; i < vec.size(); ++i)
+    for (int i = 0; i < vec.size(); ++i)
     {
         out << vec[i].t << " "
             << vec[i].v.x << " "
             << vec[i].v.y << " "
-            << vec[i].r << " "
-            << vec[i].l << std::endl;
+            << (std::isinf(vec[i].r) ? -1 : vec[i].r) << " "
+            << (std::isinf(vec[i].l) ? -1 : vec[i].l) << std::endl;
     }
 }
 
