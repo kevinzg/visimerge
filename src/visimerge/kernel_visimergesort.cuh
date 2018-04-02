@@ -8,6 +8,7 @@
 #include <moderngpu/intrinsics.hxx>
 #include <moderngpu/memory.hxx>
 #include <moderngpu/types.hxx>
+#include <moderngpu/kernel_mergesort.hxx>
 #include "cta_visimerge.cuh"
 #include "cta_visimergesort.cuh"
 #include "vec2.h"
@@ -37,18 +38,17 @@ void init_viewrays(segment<T> *segs, int count, viewray<T> *dest, mgpu::context_
     };
 
     mgpu::transform(k, count, context, segs, dest);
-
     context.synchronize();
 }
 
 
 template<typename T>
-void kernel_visimergesort(segment<T> *segs, int seg_count, viewray<T> *output, mgpu::context_t &context)
+void kernel_visimergesort(segment<T> *segs, const int seg_count, viewray<T> *output, mgpu::context_t &context)
 {
     typedef segment<T> segmentT;
     typedef viewray<T> viewrayT;
 
-    int vr_count = seg_count * 2;
+    const int vr_count = seg_count * 2;
 
     mgpu::mem_t<segmentT> dev_segments(seg_count, context);
     mgpu::htod(dev_segments.data(), segs, seg_count);
@@ -58,11 +58,11 @@ void kernel_visimergesort(segment<T> *segs, int seg_count, viewray<T> *output, m
 
     typedef mgpu::launch_params_t<16, 16> launch_t;
 
-    int nv = launch_t::nv(context);
-    int num_ctas = mgpu::div_up(seg_count, nv);
-    int num_passes = mgpu::find_log2(num_ctas, true);
+    const int nv = launch_t::nv(context);
+    const int num_ctas = mgpu::div_up(seg_count, nv);
+    const int num_passes = mgpu::find_log2(num_ctas, true);
 
-    auto k = [] MGPU_DEVICE (const int tid, const int cta, viewray<T> *input, int seg_count)
+    auto k = [] MGPU_DEVICE (const int tid, const int cta, viewray<T> *input, const int seg_count)
     {
         typedef typename launch_t::sm_ptx params_t;
         enum { nt = params_t::nt, vt = params_t::vt, nv = nt * vt };
@@ -94,40 +94,46 @@ void kernel_visimergesort(segment<T> *segs, int seg_count, viewray<T> *output, m
     };
 
     mgpu::cta_launch<launch_t>(k, num_ctas, context, dev_viewrays.data(), seg_count);
-
     context.synchronize();
 
-    mgpu::dtoh(output, dev_viewrays.data(), vr_count);
+    mgpu::mem_t<viewrayT> dev_buffer(vr_count, context);
 
-    // The rest
+    viewrayT *input_ptr = dev_viewrays.data();
+    viewrayT *buffer_ptr = dev_buffer.data();
 
-    // size_t num_passes = mgpu::find_log2(count, true);
+    auto comp_viewrayT = [] MGPU_DEVICE (const viewrayT &a, const viewrayT &b) {
+        return a.t < b.t;
+    };
 
-    // std::cerr << num_passes << std::endl;
+    for (int pass = 0; pass < num_passes; ++pass)
+    {
+        int coop = 2 << pass;
 
-    // viewrayT *input = output;
-    // viewrayT *buffer = new viewrayT[vr_count];
+        mgpu::mem_t<int> partitions = mgpu::merge_sort_partitions(input_ptr, vr_count, coop, 2 * nv, comp_viewrayT, context);
+        int *mp_data = partitions.data();
 
-    // if (num_passes & 1) std::swap(input, buffer);
+        auto k = [ = ] MGPU_DEVICE (const int tid, const int cta, viewray<T> *input, viewray<T> *output)
+        {
+            typedef typename launch_t::sm_ptx params_t;
+            enum { nt = params_t::nt, vt = params_t::vt, nv = nt * vt };
 
-    // mgpu::dtoh(input, dev_viewrays.data(), vr_count);
+            mgpu::range_t tile = mgpu::get_tile(cta, 2 * nv, vr_count);
 
-    // for (size_t p = 0; p < num_passes; ++p)
-    // {
-    //     size_t sub_count = 2 << p;
+            mgpu::merge_range_t cta_range = mgpu::compute_mergesort_range(vr_count, cta, coop, 2 * nv,
+                                            mp_data[cta + 0], mp_data[cta + 1]);
 
-    //     for (size_t start = 0; start < 2 * count; start += 2 * sub_count)
-    //     {
-    //         viewrayT *a = input + start;
-    //         viewrayT *b = a + sub_count;
+            mgpu::merge_range_t merge_range = mgpu::compute_mergesort_range(vr_count, cta & ~(coop - 1), coop, 2 * nv);
 
-    //         serial_visimerge(a, sub_count, b, sub_count, buffer + start);
-    //     }
+            cta_visimerge(input, output, cta_range, merge_range, tile, tid, vt);
+        };
 
-    //     std::swap(input, buffer);
-    // }
+        mgpu::cta_launch<launch_t>(k, num_ctas, context, input_ptr, buffer_ptr);
+        context.synchronize();
 
-    // delete[] buffer;
+        std::swap(input_ptr, buffer_ptr);
+    }
+
+    mgpu::dtoh(output, input_ptr, vr_count);
 }
 
 

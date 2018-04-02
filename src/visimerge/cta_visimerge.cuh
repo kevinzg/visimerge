@@ -93,6 +93,20 @@ MGPU_DEVICE void serial_visimerge(viewray<T> *input, viewray<T> *dest, const mgp
 }
 
 
+template <typename T>
+MGPU_DEVICE void cta_visimerge(viewray<T> *input, viewray<T> *dest, const mgpu::merge_range_t cta_range,
+                               const mgpu::merge_range_t merge_range, const mgpu::range_t tile,
+                               const int tid, const int vt)
+{
+    const int diag = 2 * vt * tid;
+    const int mp = mgpu::merge_path<mgpu::bounds_lower>(input, cta_range, diag, [ = ](const viewray<T> &a, const viewray<T> &b) -> bool {
+        return a.t < b.t;
+    });
+
+    serial_visimerge(input, dest + tile.begin + diag, cta_range.partition(mp, diag), vt, merge_range);
+};
+
+
 } // namespace vmgpu
 
 #endif // VMGPU_CTA_VISIMERGE_CUH
