@@ -68,7 +68,7 @@ void kernel_visimergesort(segment<T> *segs, const int seg_count, viewray<T> *out
 
     mgpu::mem_t<viewrayT> dev_buffer(vr_count, context);
 
-    typedef mgpu::launch_params_t<16, 16> launch_t;
+    typedef mgpu::launch_params_t<64, 1> launch_t;
 
     const int nv = launch_t::nv(context);
     const int num_ctas = mgpu::div_up(seg_count, nv);
