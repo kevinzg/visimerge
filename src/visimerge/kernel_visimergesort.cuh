@@ -105,11 +105,12 @@ void cta_level_visimergesort(viewray<T> *input, mgpu::context_t &context, const 
 
 template<typename launch_t, typename T>
 viewray<T> *kernel_visimerge(viewray<T> *input, viewray<T> *buffer, mgpu::context_t &context,
-                             const int seg_count, const int vr_count, bool profile)
+                             const int seg_count, const int vr_count, const int max_passes = -1, bool profile = false)
 {
     const int nv = launch_t::nv(context);
     const int num_ctas = mgpu::div_up(seg_count, nv);
-    const int num_passes = mgpu::find_log2(num_ctas, true);
+    const int num_passes = max_passes < 0 ?
+                           mgpu::find_log2(num_ctas, true) : min(mgpu::find_log2(num_ctas, true), max_passes);
 
     auto comp_viewray_T = [] MGPU_DEVICE (const viewray<T> &a, const viewray<T> &b)
     {
@@ -162,7 +163,7 @@ void kernel_visimergesort(segment<T> *segs, const int seg_count, viewray<T> *out
                           bool profile = false)
 {
     typedef mgpu::launch_params_t<64, 1> cta_vmsort_launch_t;
-    typedef mgpu::launch_params_t<64, 1> kernel_vm_launch_t;
+    typedef mgpu::launch_params_t<64, 1> kernel_1_vm_launch_t;
 
     const int vr_count = seg_count * 2;
 
@@ -176,7 +177,12 @@ void kernel_visimergesort(segment<T> *segs, const int seg_count, viewray<T> *out
 
     cta_level_visimergesort<cta_vmsort_launch_t>(dev_viewrays.data(), context, seg_count, profile);
 
-    viewray<T> *dev_output = kernel_visimerge<kernel_vm_launch_t>(dev_viewrays.data(), dev_buffer.data(), context, seg_count, vr_count, profile);
+    int nv = kernel_1_vm_launch_t::nv(context);
+    int num_ctas = mgpu::div_up(seg_count, nv);
+    int passes = mgpu::find_log2(num_ctas, true);
+
+    viewray<T> *dev_output = kernel_visimerge<kernel_1_vm_launch_t>(dev_viewrays.data(), dev_buffer.data(), context,
+                             seg_count, vr_count, passes, profile);
 
     mgpu::dtoh(output, dev_output, vr_count);
 }
