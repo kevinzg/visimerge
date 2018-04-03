@@ -4,6 +4,8 @@
 #include <vector>
 #include <sstream>
 #include <cmath>
+#include <sys/time.h>
+#include <unistd.h>
 #include "visimerge/kernel_visimergesort.cuh"
 
 using namespace vmgpu;
@@ -76,7 +78,24 @@ int main(int argc, char** argv)
 
     mgpu::standard_context_t context(false);
 
+    struct timeval start, end;
+
+    if (profile) gettimeofday(&start, NULL);
+
     kernel_visimergesort(vec.data(), vec.size(), vis.data(), context, profile);
+
+    if (profile)
+    {
+        gettimeofday(&end, NULL);
+
+        long seconds  = end.tv_sec  - start.tv_sec;
+        long useconds = end.tv_usec - start.tv_usec;
+
+        double s = seconds + useconds / 1e6;
+
+        std::cerr << "kernel_visimergesort took " << s << " seconds to find the visibility region of " << vec.size()
+                  << " segments" << std::endl;
+    }
 
     print_viewrays(vis, std::cout);
 
