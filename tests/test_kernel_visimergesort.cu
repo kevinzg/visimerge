@@ -97,7 +97,7 @@ int main(int argc, char** argv)
                   << " segments" << std::endl;
     }
 
-    print_viewrays(vis, std::cout);
+    if (!profile) print_viewrays(vis, std::cout);
 
     return 0;
 }
