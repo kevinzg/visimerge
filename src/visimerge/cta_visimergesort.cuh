@@ -11,7 +11,7 @@ namespace vmgpu {
 
 
 template<typename T>
-MGPU_DEVICE viewray<T> *thread_visimergesort(viewray<T> *input, viewray<T> *buffer,
+MGPU_DEVICE bool thread_visimergesort(viewray<T> *input, viewray<T> *buffer,
         const int vr_count, const int seg_count)
 {
     int num_passes = mgpu::find_log2(seg_count);
@@ -29,7 +29,7 @@ MGPU_DEVICE viewray<T> *thread_visimergesort(viewray<T> *input, viewray<T> *buff
         mgpu::swap(input, buffer);
     }
 
-    return input;
+    return num_passes & 1;
 }
 
 
@@ -61,7 +61,9 @@ MGPU_DEVICE viewray<T> *cta_visimergesort(viewray<T> *input, viewray<T> *buffer,
     typedef typename launch_t::sm_ptx params_t;
     enum { nt = params_t::nt, vt = params_t::vt, nv = nt * vt };
 
-    thread_visimergesort(input + vr_range.begin, buffer + vr_range.begin, vr_range.count(), seg_range.count());
+    bool switch_ptr = thread_visimergesort(input + vr_range.begin, buffer + vr_range.begin, vr_range.count(), seg_range.count());
+
+    if (switch_ptr) mgpu::swap(input, buffer);
 
     __syncthreads();
 

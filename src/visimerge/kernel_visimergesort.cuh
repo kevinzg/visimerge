@@ -124,6 +124,8 @@ void kernel_visimergesort(segment<T> *segs, const int seg_count, viewray<T> *out
     viewrayT *input_ptr = dev_viewrays.data();
     viewrayT *buffer_ptr = dev_buffer.data();
 
+    if (mgpu::find_log2(nv) & 1) std::swap(input_ptr, buffer_ptr);
+
     auto comp_viewrayT = [] MGPU_DEVICE (const viewrayT & a, const viewrayT & b) {
         return a.t < b.t;
     };
