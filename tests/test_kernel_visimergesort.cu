@@ -70,11 +70,13 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
 
+    bool profile = argc >= 3 && std::string(argv[2]) == "--profile";
+
     std::vector<viewray<double>> vis(vec.size() * 2);
 
     mgpu::standard_context_t context(false);
 
-    kernel_visimergesort(vec.data(), vec.size(), vis.data(), context);
+    kernel_visimergesort(vec.data(), vec.size(), vis.data(), context, profile);
 
     print_viewrays(vis, std::cout);
 
