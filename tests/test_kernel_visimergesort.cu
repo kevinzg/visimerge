@@ -48,8 +48,8 @@ void print_viewrays(const std::vector<viewray<T>> &vec, Os &out)
     for (int i = 0; i < vec.size(); ++i)
     {
         out << vec[i].t << " "
-            << vec[i].vx() << " "
-            << vec[i].vy() << " "
+            << (almost_equal(vec[i].vx(), 0.0) ? 0.0 : vec[i].vx()) << " "
+            << (almost_equal(vec[i].vy(), 0.0) ? 0.0 : vec[i].vy()) << " "
             << (std::isinf(vec[i].r) ? -1 : vec[i].r) << " "
             << (std::isinf(vec[i].l) ? -1 : vec[i].l) << std::endl;
     }
