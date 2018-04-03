@@ -42,7 +42,9 @@ MGPU_DEVICE T find_limit(const vec2<T> &ray, const viewray<T> &a, const viewray<
     if (isinf(a.l) || isinf(b.r))
         return CUDART_INF;
 
-    segment<T> seg(a.v * a.l, b.v * b.r);
+    const vec2<T> av(a.vx(), a.vy()), bv(b.vx(), b.vy());
+
+    segment<T> seg(av * a.l, bv * b.r);
     vec2<T> intersection;
 
     if (!ray_segment_intersection(ray, seg, intersection))
@@ -74,12 +76,13 @@ MGPU_DEVICE void serial_visimerge(viewray<T> *input, viewray<T> *dest, const mgp
         auto get_limit = [ =, &ai, &bi](side_t side) -> T
         {
             T limit = CUDART_INF;
+            const vec2<T> v(dest[i].vx(), dest[i].vy());
 
             if (ai - merge_range.a_begin > 0 && ai - merge_range.a_begin < merge_range.a_count())
-                limit = input[ai - side].t == dest[i].t ? 0.0 : min(limit, find_limit(dest[i].v, input[ai - 1], input[ai]));
+                limit = input[ai - side].t == dest[i].t ? 0.0 : min(limit, find_limit(v, input[ai - 1], input[ai]));
 
             if (bi - merge_range.b_begin > 0 && bi - merge_range.b_begin < merge_range.b_count())
-                limit = input[bi - side].t == dest[i].t ? 0.0 : min(limit, find_limit(dest[i].v, input[bi - 1], input[bi]));
+                limit = input[bi - side].t == dest[i].t ? 0.0 : min(limit, find_limit(v, input[bi - 1], input[bi]));
 
             return limit;
         };
