@@ -45,8 +45,8 @@ void init_viewrays(segment<T> *segs, int count, viewray<T> *dest, mgpu::context_
     if (profile)
     {
         double s = context.timer_end();
-        std::cerr << "init_viewrays took " << s << " seconds to convert " << count << " segments ("
-                  << count / s << " segments/s)" << std::endl;
+        std::cerr << "init_viewrays took " << s * 1e3 << "ms to convert " << count << " segments ("
+                  << count * sizeof(segment<T>) / double(1 << 30) / s << " GiB/s)" << std::endl;
     }
 }
 
@@ -111,8 +111,9 @@ void kernel_visimergesort(segment<T> *segs, const int seg_count, viewray<T> *out
     if (profile)
     {
         double s = context.timer_end();
-        std::cerr << "cta_visimergesort took " << s << " seconds to process " << nv * num_ctas << " segments in "
-                  << num_ctas << " blocks of " << nv << " segments" << std::endl;
+        std::cerr << "cta_visimergesort took " << s * 1e3 << "ms to process " << nv * num_ctas << " segments in "
+                  << num_ctas << " blocks of " << nv << " segments (" << vr_count * sizeof(viewrayT) / double(1 << 30) / s
+                  << " GiB/s)" << std::endl;
     }
 
     mgpu::mem_t<viewrayT> dev_buffer(vr_count, context);
@@ -157,7 +158,8 @@ void kernel_visimergesort(segment<T> *segs, const int seg_count, viewray<T> *out
     if (profile)
     {
         double s = context.timer_end();
-        std::cerr << "it took " << s << " seconds to process " << num_passes << " visimerge passes " << std::endl;
+        std::cerr << "it took " << s * 1e3 << "ms to process " << num_passes << " visimerge passes ("
+                  << num_passes * vr_count * sizeof(viewrayT) / double(1 << 30) / s << " GiB/s)" << std::endl;
     }
 
     mgpu::dtoh(output, input_ptr, vr_count);

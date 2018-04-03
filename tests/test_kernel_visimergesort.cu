@@ -93,7 +93,7 @@ int main(int argc, char** argv)
 
         double s = seconds + useconds / 1e6;
 
-        std::cerr << "kernel_visimergesort took " << s << " seconds to find the visibility region of " << vec.size()
+        std::cerr << "kernel_visimergesort took " << s * 1e3 << "ms to find the visibility region of " << vec.size()
                   << " segments" << std::endl;
     }
 
