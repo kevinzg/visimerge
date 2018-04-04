@@ -25,13 +25,13 @@ bool ray_segment_intersection(const vec2<T> &ray, const segment<T> &seg, vec2<T>
 
     T s = cross(u, ray);
 
-    if (almost_equal(s, 0.0))
+    if (almost_equal(s, T(0)))
         return false;
 
     vec2T r = seg.a / s;
     T i = cross(ray, r);
 
-    if (i >= 0.0 || i <= 1.0 || almost_equal(i, 0.0) || almost_equal(i, 1.0))
+    if (i >= T(0) || i <= T(1) || almost_equal(i, T(0)) || almost_equal(i, T(1)))
     {
         a = seg.a + u * i;
         return true;
@@ -82,10 +82,10 @@ void serial_visimerge(viewray<T> *a, int a_count, viewray<T> *b, int b_count, vi
             T limit = CUDART_INF;
 
             if (ai > 0 && ai < count / 2)
-                limit = a[ai - side].t == dest[i].t ? 0.0 : std::min(limit, find_limit(dest[i].v, a[ai - 1], a[ai]));
+                limit = a[ai - side].t == dest[i].t ? T(0) : std::min(limit, find_limit(dest[i].v, a[ai - 1], a[ai]));
 
             if (bi > 0 && bi < count / 2)
-                limit = b[bi - side].t == dest[i].t ? 0.0 : std::min(limit, find_limit(dest[i].v, b[bi - 1], b[bi]));
+                limit = b[bi - side].t == dest[i].t ? T(0) : std::min(limit, find_limit(dest[i].v, b[bi - 1], b[bi]));
 
             return limit;
         };

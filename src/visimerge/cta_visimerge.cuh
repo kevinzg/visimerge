@@ -20,13 +20,13 @@ MGPU_DEVICE bool ray_segment_intersection(const vec2<T> &ray, const segment<T> &
 
     T s = cross(u, ray);
 
-    if (almost_equal(s, 0.0))
+    if (almost_equal(s, T(0)))
         return false;
 
     vec2T r = seg.a / s;
     T i = cross(ray, r);
 
-    if (i >= 0.0 || i <= 1.0 || almost_equal(i, 0.0) || almost_equal(i, 1.0))
+    if (i >= T(0) || i <= T(1) || almost_equal(i, T(0)) || almost_equal(i, T(1)))
     {
         a = seg.a + u * i;
         return true;
@@ -79,10 +79,10 @@ MGPU_DEVICE void serial_visimerge(viewray<T> *input, viewray<T> *dest, const mgp
             const vec2<T> v(dest[i].vx(), dest[i].vy());
 
             if (ai - merge_range.a_begin > 0 && ai - merge_range.a_begin < merge_range.a_count())
-                limit = input[ai - side].t == dest[i].t ? 0.0 : min(limit, find_limit(v, input[ai - 1], input[ai]));
+                limit = input[ai - side].t == dest[i].t ? T(0) : min(limit, find_limit(v, input[ai - 1], input[ai]));
 
             if (bi - merge_range.b_begin > 0 && bi - merge_range.b_begin < merge_range.b_count())
-                limit = input[bi - side].t == dest[i].t ? 0.0 : min(limit, find_limit(v, input[bi - 1], input[bi]));
+                limit = input[bi - side].t == dest[i].t ? T(0) : min(limit, find_limit(v, input[bi - 1], input[bi]));
 
             return limit;
         };
