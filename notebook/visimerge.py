@@ -40,7 +40,7 @@ def draw(segments=[], region=[], xlim=12, ylim=12, figsize=8):
         if vec.r < 0 and vec.v != pvec.v:
             unbounded_regions.append((float(pvec.a), float(vec.a)))
 
-        if vec.r > 0 and pvec.l > 0:
+        if vec.r > 0 and pvec.l > 0 and vec.v != pvec.v:
             patches.append(mplp.Polygon([origin, pvec.v * pvec.l, vec.v * vec.r], True))
 
     if len(region) > 0 and region[-1].v != iv:
