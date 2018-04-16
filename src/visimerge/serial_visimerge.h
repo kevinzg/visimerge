@@ -75,26 +75,25 @@ void serial_visimerge(viewray<T> *a, int a_count, viewray<T> *b, int b_count, vi
 
         dest[i] = p ? a[ai] : b[bi];
 
-        enum side_t { left = 0, right = 1 };
-
-        auto get_limit = [ =, &ai, &bi](side_t side) -> T
         {
             T limit = CUDART_INF;
 
-            if (ai > 0 && ai < count / 2)
-                limit = a[ai - side].t == dest[i].t ? T(0) : std::min(limit, find_limit(dest[i].v, a[ai - 1], a[ai]));
+            viewray<T> *s = 0;
+            int j;
 
-            if (bi > 0 && bi < count / 2)
-                limit = b[bi - side].t == dest[i].t ? T(0) : std::min(limit, find_limit(dest[i].v, b[bi - 1], b[bi]));
+            if (p && bi > 0 && bi < count / 2)
+                s = b, j = bi;
+            else if (!p && ai > 0 && ai < count / 2)
+                s = a, j = ai;
 
-            return limit;
-        };
+            if (s)
+                limit = find_limit(dest[i].v, s[j - 1], s[j]);
 
-        dest[i].r = get_limit(right);
+            dest[i].r = std::min(limit, dest[i].r);
+            dest[i].l = std::min(limit, dest[i].l);
+        }
 
         p ? ++ai : ++bi;
-
-        dest[i].l = get_limit(left);
     }
 }
 
