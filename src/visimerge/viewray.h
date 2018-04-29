@@ -22,6 +22,9 @@ struct viewray
 #ifndef __CUDACC__
     MGPU_HOST_DEVICE viewray(): viewray(0, vec2<T>(), 0, 0) {}
     MGPU_HOST_DEVICE viewray(T t_, vec2<T> v_, T l_, T r_): t(t_), v(v_), l(l_), r(r_) {}
+
+    MGPU_HOST_DEVICE T vx() const { return v.x; }
+    MGPU_HOST_DEVICE T vy() const { return v.y; }
 #else
     MGPU_HOST_DEVICE viewray(): viewray(0, 0, 0) {}
     MGPU_HOST_DEVICE viewray(T t_, T l_, T r_): t(t_), l(l_), r(r_) {}
