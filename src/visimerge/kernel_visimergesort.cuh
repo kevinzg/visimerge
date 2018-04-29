@@ -162,7 +162,7 @@ template<typename T>
 void kernel_visimergesort(segment<T> *segs, const int seg_count, viewray<T> *output, mgpu::context_t &context,
                           bool profile = false)
 {
-    typedef mgpu::launch_params_t<64, 1> launch_t;
+    typedef mgpu::launch_params_t<128, 1> launch_t;
 
     const int vr_count = seg_count * 2;
 

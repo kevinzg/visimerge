@@ -64,7 +64,7 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
 
-    auto vec = readfile<double>(argv[1]);
+    auto vec = readfile<float>(argv[1]);
 
     if (1u << mgpu::find_log2(vec.size(), true) != vec.size())
     {
@@ -74,7 +74,7 @@ int main(int argc, char** argv)
 
     bool profile = argc >= 3 && std::string(argv[2]) == "--profile";
 
-    std::vector<viewray<double>> vis(vec.size() * 2);
+    std::vector<viewray<float>> vis(vec.size() * 2);
 
     mgpu::standard_context_t context(false);
 
