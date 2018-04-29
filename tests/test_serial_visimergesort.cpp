@@ -7,53 +7,9 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include "visimerge/serial_visimergesort.h"
+#include "visimerge/io_common.h"
 
 using namespace vmgpu;
-
-
-template<typename T>
-std::vector<segment<T>> readfile(const std::string &filename)
-{
-    typedef segment<T> segmentT;
-
-    std::ifstream file(filename.c_str());
-    std::string line;
-
-    std::vector<segmentT> vec;
-
-    while (std::getline(file, line))
-    {
-        std::stringstream ss(line);
-
-        segmentT seg;
-
-        ss >> seg.a.x;
-        ss.get();
-        ss >> seg.a.y;
-
-        ss >> seg.b.x;
-        ss.get();
-        ss >> seg.b.y;
-
-        vec.push_back(seg);
-    }
-
-    return vec;
-}
-
-
-template<typename T, typename Os>
-void print_viewrays(const std::vector<viewray<T>> &vec, Os &out)
-{
-    for (size_t i = 0; i < vec.size(); ++i)
-    {
-        out << vec[i].t << " "
-            << vec[i].v.x << " "
-            << vec[i].v.y << " "
-            << (std::isinf(vec[i].r) ? -1 : vec[i].r) << " "
-            << (std::isinf(vec[i].l) ? -1 : vec[i].l) << std::endl;;
-    }
-}
 
 
 int main(int argc, char** argv)
@@ -64,7 +20,7 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
 
-    auto vec = readfile<double>(argv[1]);
+    auto vec = vmgpu::readfile<double>(argv[1]);
 
     if (1u << log2(vec.size()) != vec.size())
     {
@@ -95,7 +51,7 @@ int main(int argc, char** argv)
                   << " segments" << std::endl;
     }
 
-    if (!profile) print_viewrays(vis, std::cout);
+    if (!profile) vmgpu::print_viewrays(vis, std::cout);
 
     return 0;
 }
