@@ -71,27 +71,25 @@ MGPU_DEVICE void serial_visimerge(viewray<T> *input, viewray<T> *dest, const mgp
 
         dest[i] = p ? input[ai] : input[bi];
 
-        enum side_t { left = 0, right = 1 };
-
-        auto get_limit = [ =, &ai, &bi](side_t side) -> T
         {
             T limit = CUDART_INF;
+
             const vec2<T> v(dest[i].vx(), dest[i].vy());
+            int j = -1;
 
-            if (ai - merge_range.a_begin > 0 && ai - merge_range.a_begin < merge_range.a_count())
-                limit = input[ai - side].t == dest[i].t ? T(0) : min(limit, find_limit(v, input[ai - 1], input[ai]));
+            if (p && bi - merge_range.b_begin > 0 && bi - merge_range.b_begin < merge_range.b_count())
+                j = bi;
+            else if (!p && ai - merge_range.a_begin > 0 && ai - merge_range.a_begin < merge_range.a_count())
+                j = ai;
 
-            if (bi - merge_range.b_begin > 0 && bi - merge_range.b_begin < merge_range.b_count())
-                limit = input[bi - side].t == dest[i].t ? T(0) : min(limit, find_limit(v, input[bi - 1], input[bi]));
+            if (j >= 0)
+                limit = find_limit(v, input[j - 1], input[j]);
 
-            return limit;
-        };
-
-        dest[i].r = get_limit(right);
+            dest[i].r = min(limit, dest[i].r);
+            dest[i].l = min(limit, dest[i].l);
+        }
 
         p ? ++ai : ++bi;
-
-        dest[i].l = get_limit(left);
     }
 }
 
