@@ -20,7 +20,7 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
 
-    auto vec = vmgpu::readfile<double>(argv[1]);
+    auto vec = vmgpu::readfile<float>(argv[1]);
 
     if (1u << log2(vec.size()) != vec.size())
     {
@@ -30,7 +30,7 @@ int main(int argc, char** argv)
 
     bool profile = argc >= 3 && std::string(argv[2]) == "--profile";
 
-    std::vector<viewray<double>> vis(vec.size() * 2);
+    std::vector<viewray<float>> vis(vec.size() * 2);
 
     struct timeval start, end;
 
