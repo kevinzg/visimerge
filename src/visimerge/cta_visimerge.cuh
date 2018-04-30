@@ -36,26 +36,9 @@ MGPU_DEVICE bool ray_segment_intersection(const vec2<T> &ray, const segment<T> &
 }
 
 
-template<typename T>
-MGPU_DEVICE T find_limit(const vec2<T> &ray, const viewray<T> &a, const viewray<T> &b)
-{
-    if (isinf(a.l) || isinf(b.r))
-        return CUDART_INF;
-
-    const vec2<T> av(a.vx(), a.vy()), bv(b.vx(), b.vy());
-
-    segment<T> seg(av * a.l, bv * b.r);
-    vec2<T> intersection;
-
-    if (!ray_segment_intersection(ray, seg, intersection))
-        return CUDART_INF;
-
-    return norm(intersection);
-}
-
-
 template <typename T>
-MGPU_DEVICE void serial_visimerge(viewray<T> *input, viewray<T> *dest, const mgpu::merge_range_t range, const int vt,
+MGPU_DEVICE void serial_visimerge(const vray_array<T> &input, const vray_array<T> &dest,
+                                  const mgpu::merge_range_t range, const int vt,
                                   const mgpu::merge_range_t merge_range)
 {
     int ai = range.a_begin;
@@ -67,14 +50,16 @@ MGPU_DEVICE void serial_visimerge(viewray<T> *input, viewray<T> *dest, const mgp
         bool p;
         if (bi >= range.b_end) p = true;
         else if (ai >= range.a_end) p = false;
-        else p = input[ai].t <= input[bi].t;
+        else p = input.t[ai] <= input.t[bi];
 
-        dest[i] = p ? input[ai] : input[bi];
+        T dt = p ? input.t[ai] : input.t[bi];
+        T dl = p ? input.l[ai] : input.l[bi];
+        T dr = p ? input.r[ai] : input.r[bi];
 
         {
             T limit = CUDART_INF;
 
-            const vec2<T> v(dest[i].vx(), dest[i].vy());
+            const vec2<T> v(cos(dt), sin(dt));
             int j = -1;
 
             if (p && bi - merge_range.b_begin > 0 && bi - merge_range.b_begin < merge_range.b_count())
@@ -82,12 +67,25 @@ MGPU_DEVICE void serial_visimerge(viewray<T> *input, viewray<T> *dest, const mgp
             else if (!p && ai - merge_range.a_begin > 0 && ai - merge_range.a_begin < merge_range.a_count())
                 j = ai;
 
-            if (j >= 0)
-                limit = find_limit(v, input[j - 1], input[j]);
+            if (j >= 0 && !isinf(input.l[j - 1]) && !isinf(input.r[j]))
+            {
+                const vec2<T> av(cos(input.t[j - 1]), sin(input.t[j - 1]));
+                const vec2<T> bv(cos(input.t[j]), sin(input.t[j]));
 
-            dest[i].r = min(limit, dest[i].r);
-            dest[i].l = min(limit, dest[i].l);
+                segment<T> seg(av * input.l[j - 1], bv * input.r[j]);
+                vec2<T> intersection;
+
+                if (ray_segment_intersection(v, seg, intersection))
+                    limit = norm(intersection);
+            }
+
+            dl = min(limit, dl);
+            dr = min(limit, dr);
         }
+
+        dest.t[i] = dt;
+        dest.l[i] = dl;
+        dest.r[i] = dr;
 
         p ? ++ai : ++bi;
     }
@@ -95,14 +93,12 @@ MGPU_DEVICE void serial_visimerge(viewray<T> *input, viewray<T> *dest, const mgp
 
 
 template <typename T>
-MGPU_DEVICE void cta_visimerge(viewray<T> *input, viewray<T> *dest, const mgpu::merge_range_t cta_range,
-                               const mgpu::merge_range_t merge_range, const mgpu::range_t tile,
-                               const int tid, const int vt)
+MGPU_DEVICE void cta_visimerge(const vray_array<T> &input, const vray_array<T> &dest,
+                               const mgpu::merge_range_t cta_range, const mgpu::merge_range_t merge_range,
+                               const mgpu::range_t tile, const int tid, const int vt)
 {
     const int diag = 2 * vt * tid;
-    const int mp = mgpu::merge_path<mgpu::bounds_lower>(input, cta_range, diag, [ = ](const viewray<T> &a, const viewray<T> &b) -> bool {
-        return a.t < b.t;
-    });
+    const int mp = mgpu::merge_path<mgpu::bounds_lower>(input.t, cta_range, diag, mgpu::less_t<T>());
 
     serial_visimerge(input, dest + tile.begin + diag, cta_range.partition(mp, diag), vt, merge_range);
 };
