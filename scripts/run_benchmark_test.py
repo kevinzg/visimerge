@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 
-import sys, argparse, pathlib, subprocess
+import os, sys, argparse, pathlib, subprocess
 
 MAX_K = 23
 
-cuda_exec = '../bin/test_kernel_visimergesort'
-cpu_exec = '../bin/test_serial_visimergesort'
-generator_exec = './generator.py'
+visimerge_dir = pathlib.Path(os.path.realpath(__file__)).parents[1]
+cuda_exec = './bin/test_kernel_visimergesort'
+cpu_exec = './bin/test_serial_visimergesort'
+generator_exec = './scripts/generator.py'
 input_file_template = '/tmp/gen_{0}_input'
 
 
@@ -42,7 +43,7 @@ def main(args):
 
             input_file.touch()
             with input_file.open(mode='w') as f:
-                subprocess.run([generator_exec, str(k)], stdout=f)
+                subprocess.run([generator_exec, str(k)], stdout=f, cwd=str(visimerge_dir))
 
         print("computing visibility region of 2**{0} segments using {1}".format(k, processor),
             file=sys.stderr)
@@ -50,7 +51,8 @@ def main(args):
         data_type = '--double' if args.double else '--float'
         binary_exec = cpu_exec if args.serial else cuda_exec
 
-        proc = subprocess.run([binary_exec, str(input_file), '--profile', data_type], stderr=subprocess.PIPE)
+        proc = subprocess.run([binary_exec, str(input_file), '--profile', data_type], stderr=subprocess.PIPE,
+            cwd=str(visimerge_dir))
 
         results[k] = parse_output(proc.stderr)
 
