@@ -10,7 +10,8 @@
 
 using namespace vmgpu;
 
-template<typename T>
+
+template<typename T, typename launch_t>
 std::vector<viewray<T>> solve_visibility_gpu(const std::vector<segment<T>> &host_segments, bool profile = false)
 {
     mgpu::standard_context_t context(false);
@@ -23,7 +24,7 @@ std::vector<viewray<T>> solve_visibility_gpu(const std::vector<segment<T>> &host
 
     mgpu::htod(dev_segments.data(), host_segments.data(), seg_count);
 
-    kernel_visimergesort(dev_segments, dev_vrays, context, profile);
+    kernel_visimergesort<T, launch_t>(dev_segments, dev_vrays, context, profile);
     context.synchronize();
 
     vray_array<T> host_vrays = vray_array<T>::create(vr_count, context, mgpu::memory_space_host);
@@ -44,7 +45,7 @@ std::vector<viewray<T>> solve_visibility_gpu(const std::vector<segment<T>> &host
 }
 
 
-template<typename T>
+template<typename T, typename launch_t>
 int solve(const std::string &filename, bool profile = false)
 {
     auto segments = readfile<T>(filename);
@@ -55,7 +56,7 @@ int solve(const std::string &filename, bool profile = false)
         return EXIT_FAILURE;
     }
 
-    auto vrays_vec = solve_visibility_gpu(segments, profile);
+    auto vrays_vec = solve_visibility_gpu<T, launch_t>(segments, profile);
 
     if (!profile) print_viewrays(vrays_vec, std::cout);
 
@@ -65,6 +66,9 @@ int solve(const std::string &filename, bool profile = false)
 
 int main(int argc, char** argv)
 {
+    typedef mgpu::launch_params_t<128, 1> float_launch;
+    typedef mgpu::launch_params_t<64, 1> double_launch;
+
     if (argc < 2)
     {
         std::cerr << argv[0] << ": missing file operand" << std::endl;
@@ -78,7 +82,7 @@ int main(int argc, char** argv)
     bool profile = options.count("--profile");
 
     if (options.count("--double"))
-        return solve<double>(argv[1], profile);
+        return solve<double, double_launch>(argv[1], profile);
 
-    return solve<float>(argv[1], profile);
+    return solve<float, float_launch>(argv[1], profile);
 }

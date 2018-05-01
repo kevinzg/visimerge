@@ -180,12 +180,10 @@ bool kernel_visimerge(vray_array<T> input, vray_array<T> buffer, mgpu::context_t
 }
 
 
-template<typename T>
+template<typename T, typename launch_t>
 void kernel_visimergesort(const mgpu::mem_t<segment<T>> &segments, vray_array<T> &dest,
                           mgpu::context_t &context, bool profile = false)
 {
-    typedef mgpu::launch_params_t<128, 1> launch_t;
-
     const int seg_count = segments.size();
     const int vr_count = 2 * seg_count;
 
