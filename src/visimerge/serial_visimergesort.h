@@ -2,6 +2,8 @@
 #define VMGPU_SERIAL_VISIMERGESORT_H
 
 #include <algorithm>
+#include <sys/time.h>
+#include <unistd.h>
 #include "serial_visimerge.h"
 
 namespace vmgpu {
@@ -37,7 +39,7 @@ void init_viewrays(segment<T> *segs, size_t count, viewray<T> *dest)
 
 
 template<typename T>
-void serial_visimergesort(segment<T> *segs, size_t count, viewray<T> *output)
+void serial_visimergesort(segment<T> *segs, size_t count, viewray<T> *output, bool profile = false)
 {
     typedef viewray<T> viewrayT;
 
@@ -47,6 +49,9 @@ void serial_visimergesort(segment<T> *segs, size_t count, viewray<T> *output)
     viewrayT *buffer = new viewrayT[count * 2];
 
     if (num_passes & 1) std::swap(input, buffer);
+
+    struct timeval start, end;
+    if (profile) gettimeofday(&start, NULL);
 
     init_viewrays(segs, count, input);
 
@@ -63,6 +68,18 @@ void serial_visimergesort(segment<T> *segs, size_t count, viewray<T> *output)
         }
 
         std::swap(input, buffer);
+    }
+
+    if (profile)
+    {
+        gettimeofday(&end, NULL);
+
+        long seconds  = end.tv_sec  - start.tv_sec;
+        long useconds = end.tv_usec - start.tv_usec;
+
+        double s = seconds + useconds / 1e6;
+
+        std::cerr << "serial_visimergesort: " << s * 1e3 << "ms" << std::endl;
     }
 
     delete[] buffer;

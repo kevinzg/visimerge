@@ -2,14 +2,34 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <set>
 #include <sstream>
 #include <cmath>
-#include <sys/time.h>
-#include <unistd.h>
 #include "visimerge/serial_visimergesort.h"
 #include "visimerge/io_common.h"
 
 using namespace vmgpu;
+
+
+template<typename T>
+int solve(const std::string &filename, bool profile = false)
+{
+    auto segments = readfile<T>(filename);
+
+    if (1u << log2(segments.size(), true) != segments.size())
+    {
+        std::cerr << "current visimergesort only works for segment sets with 2^k segments" << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    std::vector<viewray<T>> vrays_vec(segments.size() * 2);
+
+    serial_visimergesort(segments.data(), segments.size(), vrays_vec.data(), profile);
+
+    if (!profile) print_viewrays(vrays_vec, std::cout);
+
+    return EXIT_SUCCESS;
+}
 
 
 int main(int argc, char** argv)
@@ -20,37 +40,14 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
 
-    auto vec = vmgpu::readfile<float>(argv[1]);
+    std::set<std::string> options;
+    for (int i = 2; i < argc; ++i)
+        options.insert(std::string(argv[i]));
 
-    if (1u << log2(vec.size()) != vec.size())
-    {
-        std::cerr << "current visimergesort only works for segment sets with 2^k segments" << std::endl;
-        return EXIT_FAILURE;
-    }
+    bool profile = options.count("--profile");
 
-    bool profile = argc >= 3 && std::string(argv[2]) == "--profile";
+    if (options.count("--double"))
+        return solve<double>(argv[1], profile);
 
-    std::vector<viewray<float>> vis(vec.size() * 2);
-
-    struct timeval start, end;
-
-    if (profile) gettimeofday(&start, NULL);
-
-    serial_visimergesort(vec.data(), vec.size(), vis.data());
-
-    if (profile)
-    {
-        gettimeofday(&end, NULL);
-
-        long seconds  = end.tv_sec  - start.tv_sec;
-        long useconds = end.tv_usec - start.tv_usec;
-
-        double s = seconds + useconds / 1e6;
-
-        std::cerr << "serial_visimergesort: " << s * 1e3 << "ms" << std::endl;
-    }
-
-    if (!profile) vmgpu::print_viewrays(vis, std::cout);
-
-    return 0;
+    return solve<float>(argv[1], profile);
 }
