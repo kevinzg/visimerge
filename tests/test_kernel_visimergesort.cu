@@ -4,8 +4,6 @@
 #include <vector>
 #include <sstream>
 #include <cmath>
-#include <sys/time.h>
-#include <unistd.h>
 #include "visimerge/kernel_visimergesort.cuh"
 #include "visimerge/io_common.h"
 
@@ -24,25 +22,8 @@ std::vector<viewray<T>> solve_visibility_gpu(const std::vector<segment<T>> &host
 
     mgpu::htod(dev_segments.data(), host_segments.data(), seg_count);
 
-    struct timeval start, end;
-
-    if (profile) gettimeofday(&start, NULL);
-
     kernel_visimergesort(dev_segments, dev_vrays, context, profile);
     context.synchronize();
-
-    if (profile)
-    {
-        gettimeofday(&end, NULL);
-
-        long seconds  = end.tv_sec  - start.tv_sec;
-        long useconds = end.tv_usec - start.tv_usec;
-
-        double s = seconds + useconds / 1e6;
-
-        std::cerr << "kernel_visimergesort took " << s * 1e3 << "ms to find the visibility region of " << seg_count
-                  << " segments" << std::endl;
-    }
 
     vray_array<T> host_vrays = vray_array<T>::create(vr_count, context, mgpu::memory_space_host);
 

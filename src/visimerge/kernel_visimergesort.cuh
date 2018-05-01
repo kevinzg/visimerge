@@ -9,6 +9,8 @@
 #include <moderngpu/memory.hxx>
 #include <moderngpu/types.hxx>
 #include <moderngpu/kernel_mergesort.hxx>
+#include <sys/time.h>
+#include <unistd.h>
 #include "cta_visimerge.cuh"
 #include "cta_visimergesort.cuh"
 #include "vec2.h"
@@ -48,8 +50,7 @@ void init_viewrays(const segment<T> *segments, const int seg_count, const vray_a
     if (profile)
     {
         double s = context.timer_end();
-        std::cerr << "init_viewrays took " << s * 1e3 << "ms to convert " << seg_count << " segments ("
-                  << seg_count * sizeof(segment<T>) / double(1 << 30) / s << " GiB/s)" << std::endl;
+        std::cerr << "init_viewrays: " << s * 1e3 << "ms" << std::endl;
     }
 }
 
@@ -123,9 +124,7 @@ void cta_level_visimergesort(const vray_array<T> &input, const int seg_count,
     if (profile)
     {
         double s = context.timer_end();
-        std::cerr << "cta_level_visimergesort took " << s * 1e3 << "ms to process " << nv * num_ctas << " segments in "
-                  << num_ctas << " blocks of " << nv << " segments (" << 2 * seg_count * sizeof(viewray<T>) / double(1 << 30) / s
-                  << " GiB/s)" << std::endl;
+        std::cerr << "cta_level_visimergesort: " << s * 1e3 << "ms" << std::endl;
     }
 }
 
@@ -174,8 +173,7 @@ bool kernel_visimerge(vray_array<T> input, vray_array<T> buffer, mgpu::context_t
     if (profile)
     {
         double s = context.timer_end();
-        std::cerr << "it took " << s * 1e3 << "ms to process " << num_passes << " visimerge passes ("
-                  << num_passes * vr_count * sizeof(viewray<T>) / double(1 << 30) / s << " GiB/s)" << std::endl;
+        std::cerr << "kernel_visimerge: " << s * 1e3 << "ms" << std::endl;
     }
 
     return num_passes & 1;
@@ -191,13 +189,29 @@ void kernel_visimergesort(const mgpu::mem_t<segment<T>> &segments, vray_array<T>
     const int seg_count = segments.size();
     const int vr_count = 2 * seg_count;
 
+    vray_array<T> buffer = vray_array<T>::create(vr_count, context);
+
+    struct timeval start, end;
+
+    if (profile) gettimeofday(&start, NULL);
+
     init_viewrays(segments.data(), seg_count, dest, context, profile);
 
     cta_level_visimergesort<launch_t>(dest, seg_count, context, profile);
 
-    vray_array<T> buffer = vray_array<T>::create(vr_count, context);
-
     bool swap_input = kernel_visimerge<launch_t>(dest, buffer, context, seg_count, vr_count, -1, profile);
+
+    if (profile)
+    {
+        gettimeofday(&end, NULL);
+
+        long seconds  = end.tv_sec  - start.tv_sec;
+        long useconds = end.tv_usec - start.tv_usec;
+
+        double s = seconds + useconds / 1e6;
+
+        std::cerr << "total: " << s * 1e3 << "ms" << std::endl;
+    }
 
     if (swap_input)
         std::swap(buffer, dest);
