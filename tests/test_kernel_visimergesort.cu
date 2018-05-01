@@ -2,6 +2,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <set>
 #include <sstream>
 #include <cmath>
 #include "visimerge/kernel_visimergesort.cuh"
@@ -43,17 +44,10 @@ std::vector<viewray<T>> solve_visibility_gpu(const std::vector<segment<T>> &host
 }
 
 
-int main(int argc, char** argv)
+template<typename T>
+int solve(const std::string &filename, bool profile = false)
 {
-    typedef float real_t;
-
-    if (argc < 2)
-    {
-        std::cerr << argv[0] << ": missing file operand" << std::endl;
-        return EXIT_FAILURE;
-    }
-
-    auto segments = readfile<real_t>(argv[1]);
+    auto segments = readfile<T>(filename);
 
     if (1u << mgpu::find_log2(segments.size(), true) != segments.size())
     {
@@ -61,11 +55,30 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
 
-    bool profile = argc >= 3 && std::string(argv[2]) == "--profile";
-
     auto vrays_vec = solve_visibility_gpu(segments, profile);
 
     if (!profile) print_viewrays(vrays_vec, std::cout);
 
-    return 0;
+    return EXIT_SUCCESS;
+}
+
+
+int main(int argc, char** argv)
+{
+    if (argc < 2)
+    {
+        std::cerr << argv[0] << ": missing file operand" << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    std::set<std::string> options;
+    for (int i = 2; i < argc; ++i)
+        options.insert(std::string(argv[i]));
+
+    bool profile = options.count("--profile");
+
+    if (options.count("--double"))
+        return solve<double>(argv[1], profile);
+
+    return solve<float>(argv[1], profile);
 }
