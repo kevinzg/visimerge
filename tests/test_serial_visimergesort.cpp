@@ -47,8 +47,7 @@ int main(int argc, char** argv)
 
         double s = seconds + useconds / 1e6;
 
-        std::cerr << "serial_visimergesort took " << s * 1e3 << "ms to find the visibility region of " << vec.size()
-                  << " segments" << std::endl;
+        std::cerr << "serial_visimergesort: " << s * 1e3 << "ms" << std::endl;
     }
 
     if (!profile) vmgpu::print_viewrays(vis, std::cout);
