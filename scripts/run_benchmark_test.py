@@ -21,7 +21,7 @@ def parse_output(output):
 
 def print_results(results, time_col_name='time'):
     print('k,{0}'.format(time_col_name))
-    for k in results:
+    for k, time in sorted(results.items()):
         print('{0},{1:0.5f}'.format(k, results[k]))
 
 
