@@ -12,3 +12,5 @@ ipython = "*"
 [packages]
 sympy = "*"
 matplotlib = "*"
+jupyter = "*"
+numpy = "*"
