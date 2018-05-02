@@ -10,7 +10,7 @@ from stuff import *
 
 origin = Vec2([0, 0])
 
-ViewRay = namedtuple('ViewRay', 'a v r l')
+VRay = namedtuple('VRay', 'a v r l')
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -35,7 +35,7 @@ def draw(segments=[], region=[], xlim=12, ylim=12, figsize=8):
 
     for i, vec in enumerate(region):
 
-        pvec = region[i - 1] if i > 0 else ViewRay(0, iv, -1, -1)
+        pvec = region[i - 1] if i > 0 else VRay(0, iv, -1, -1)
 
         if vec.r < 0 and vec.v != pvec.v:
             unbounded_regions.append((float(pvec.a), float(vec.a)))
@@ -69,7 +69,7 @@ def draw(segments=[], region=[], xlim=12, ylim=12, figsize=8):
 
 # ----------------------------------------------------------------------------------------------------------------------
 
-def viewrays_for_segment(p):
+def vrays_for_segment(p):
     a = p.a
     b = p.b
 
@@ -78,12 +78,12 @@ def viewrays_for_segment(p):
 
     atan2b = atan2(b) if atan2(b) != 0 else 2 * sp.pi
 
-    return [ViewRay(atan2(a), normalize(a), -1, norm(a)), ViewRay(atan2b, normalize(b), norm(b), -1)]
+    return [VRay(atan2(a), normalize(a), -1, norm(a)), VRay(atan2b, normalize(b), norm(b), -1)]
 
 
 # ----------------------------------------------------------------------------------------------------------------------
 
-def visible_region_for_segment(p):
+def visibility_region_for_segment(p):
     a = p.a
     b = p.b
 
@@ -93,16 +93,16 @@ def visible_region_for_segment(p):
     s = b - a
 
     if s[1] == 0:
-        return viewrays_for_segment(p)
+        return vrays_for_segment(p)
 
     i = -a[1] / s[1]
 
     if 0 < i < 1 and a[0] + s[0] * i > 0:
         c = a + s * i
 
-        return viewrays_for_segment(Segment(c, b)) + viewrays_for_segment(Segment(a, c))
+        return vrays_for_segment(Segment(c, b)) + vrays_for_segment(Segment(a, c))
 
-    return viewrays_for_segment(p)
+    return vrays_for_segment(p)
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -187,7 +187,7 @@ def visimerge(s):
         return []
 
     if n == 1:
-        return visible_region_for_segment(s[0])
+        return visibility_region_for_segment(s[0])
 
     s0 = visimerge(s[0:m])
     s1 = visimerge(s[m:n])
@@ -195,7 +195,7 @@ def visimerge(s):
     return merge(s0, s1)
 
 
-def visible_region(s):
+def visibility_region(s):
     r = [p for p in s if not are_collinear(origin, *p)]
     return visimerge(r)
 
