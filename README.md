@@ -1,3 +1,3 @@
-# Visible Regions Merge
+# Visibility Regions Merge
 
-See [this jupyter notebook](./notebook/VisibleRegionsMerge.ipynb).
+See [this jupyter notebook](../notebook/notebook/VisibilityRegionsMerge.ipynb).
